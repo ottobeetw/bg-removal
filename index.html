@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相片去背 - AI 工具</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wg300;400;500;600;700&family=jf-openhuninn:wg400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: { 50: '#faf8f5', 100: '#f5f2ed', 200: '#ebe6df', 300: '#ddd5ca', 400: '#c9bfad' },
+                        warm: { 50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047', 400: '#ca8a04', 500: '#a16207' }
+                    },
+                    fontFamily: { sans: ['NotoSansTC', 'system-ui'], huninn: ['jfOpenHuninn', 'NotoSansTC'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'NotoSansTC', sans-serif; background: #faf8f5; }
+        .font-huninn { font-family: 'jfOpenHuninn', 'NotoSansTC', sans-serif; }
+        .drop-zone { transition: all 0.3s ease; }
+        .drop-zone.dragover { border-color: #ca8a04; background-color: #fefce8; transform: scale(1.02); }
+        .checkerboard { background-image: linear-gradient(45deg, #e5e5e5 25%, transparent 25%), linear-gradient(-45deg, #e5e5e5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e5e5 75%), linear-gradient(-45deg, transparent 75%, #e5e5e5 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+        .btn-glow { box-shadow: 0 0 20px rgba(202, 138, 4, 0.3); }
+        .btn-glow:hover { box-shadow: 0 0 30px rgba(202, 138, 4, 0.5); }
+        .spinner { width: 20px; height: 20px; border: 3px solid #fde047; border-top-color: #ca8a04; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div x-data="bgRemoval()" class="max-w-4xl mx-auto p-4 md:p-8">
+        <div class="text-center mb-8">
+            <h1 class="font-huninn text-4xl md:text-5xl font-bold text-gray-800 mb-2">✨ 相片去背</h1>
+            <p class="text-gray-500">瀏覽器端 AI 照片去背工具</p>
+        </div>
+        
+        <div class="drop-zone border-4 border-dashed border-cream-300 rounded-3xl p-8 text-center mb-6 cursor-pointer" :class="{ 'dragover': isDragging }" @click="$refs.fileInput.click()" @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop($event)">
+            <input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect($event)">
+            
+            <template x-if="!originalImage && !imageUrl">
+                <div class="py-12">
+                    <div class="text-6xl mb-4">🖼️</div>
+                    <p class="text-xl text-gray-600 mb-2">拖曳或點擊選擇圖片</p>
+                    <div class="mt-4 flex items-center justify-center gap-2">
+                        <input type="text" x-model="imageUrl" placeholder="或貼上圖片網址..." class="px-4 py-2 border border-cream-300 rounded-lg w-64 focus:border-warm-400 outline-none">
+                        <button @click="loadFromUrl()" class="px-4 py-2 bg-warm-400 text-white rounded-lg hover:bg-warm-500 transition">載入</button>
+                    </div>
+                </div>
+            </template>
+            
+            <template x-if="originalImage || imageUrl">
+                <div class="relative">
+                    <img :src="originalImage || imageUrl" class="max-h-96 mx-auto rounded-xl shadow-lg">
+                    <button @click.stop="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600">✕</button>
+                </div>
+            </template>
+        </div>
+        
+        <div class="text-center mb-8" x-show="originalImage || imageUrl" x-cloak>
+            <button 
+                id="processBtn"
+                @click="removeBackground()" 
+                :disabled="isProcessing"
+                class="btn-glow px-8 py-4 bg-gradient-to-r from-warm-400 to-warm-500 text-white font-huninn text-xl font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+                <template x-if="!isProcessing"><span>✨ 開始去背</span></template>
+                <template x-if="isProcessing"><span class="flex items-center gap-3"><span class="spinner"></span><span x-text="progressText">處理中...</span></span></template>
+            </button>
+        </div>
+        
+        <div x-show="isProcessing" x-cloak class="mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-600" x-text="statusText">準備中...</span>
+                    <span class="text-warm-400 font-bold" x-text="progress + '%'">0%</span>
+                </div>
+                <div class="h-3 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-warm-300 to-warm-400 transition-all duration-300" :style="'width: ' + progress + '%'"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div x-show="resultImage" x-cloak class="text-center mb-8">
+            <h3 class="font-huninn text-2xl font-bold text-gray-800 mb-4">去背完成！</h3>
+            <div class="checkerboard rounded-xl overflow-hidden inline-block mb-4">
+                <img :src="resultImage" class="max-h-96" alt="Result">
+            </div>
+            <div class="flex justify-center gap-4">
+                <a :href="resultImage" download="removed-bg.png" class="px-6 py-3 bg-warm-400 text-white rounded-xl font-bold hover:bg-warm-500 transition flex items-center gap-2">⬇️ 下載 PNG</a>
+                <button @click="startOver()" class="px-6 py-3 bg-cream-200 text-gray-700 rounded-xl font-bold hover:bg-cream-300 transition">🔄 重新開始</button>
+            </div>
+        </div>
+        
+        <div class="bg-cream-100 rounded-xl p-6">
+            <h3 class="font-huninn text-lg font-bold text-gray-800 mb-4">💡 使用說明</h3>
+            <ol class="space-y-2 text-gray-600">
+                <li><strong>1.</strong> 上傳圖片 - 拖曳或點擊選擇圖片</li>
+                <li><strong>2.</strong> AI 去背 - 點擊開始去背按鈕</li>
+                <li><strong>3.</strong> 下載結果 - 取得透明背景 PNG 圖片</li>
+            </ol>
+            <p class="mt-4 text-sm text-gray-500">🔒 圖片完全在瀏覽器內處理，不會上傳到伺服器</p>
+            <p class="text-xs text-gray-400 mt-2" id="lib-status">🚀 正在載入 AI 模型，請稍候...</p>
+        </div>
+    </div>
+    
+    <!-- Load library from CDN -->
+    <script type="module">
+        const status = document.getElementById('lib-status');
+        const btn = document.getElementById('processBtn');
+        
+        console.log('🔄 Loading @imgly/background-removal...');
+        
+        try {
+            const { removeBackground, preload } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+            
+            window.removeBg = removeBackground;
+            window.preloadFn = preload;
+            
+            console.log('✅ Library loaded');
+            
+            status.textContent = '✅ AI 模型已就緒！';
+            status.className = 'text-xs text-green-600 mt-2';
+            btn.disabled = false;
+            console.log('✅ Ready!');
+            
+        } catch (error) {
+            console.error('❌ Error:', error);
+            status.textContent = '❌ 載入失敗: ' + error.message;
+            status.className = 'text-xs text-red-600 mt-2';
+        }
+    </script>
+    
+    <script>
+        function bgRemoval() {
+            return {
+                originalImage: null,
+                resultImage: null,
+                imageUrl: '',
+                isProcessing: false,
+                progress: 0,
+                progressText: '',
+                statusText: '',
+                isDragging: false,
+                
+                handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (file) this.loadFile(file);
+                },
+                
+                handleDrop(event) {
+                    this.isDragging = false;
+                    const file = event.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) this.loadFile(file);
+                },
+                
+                loadFile(file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => { this.originalImage = e.target.result; this.resultImage = null; };
+                    reader.readAsDataURL(file);
+                },
+                
+                loadFromUrl() {
+                    if (!this.imageUrl) return;
+                    this.originalImage = this.imageUrl;
+                    this.resultImage = null;
+                },
+                
+                clearImage() {
+                    this.originalImage = null;
+                    this.imageUrl = '';
+                    this.resultImage = null;
+                },
+                
+                async removeBackground() {
+                    if (!this.originalImage) return;
+                    
+                    if (!window.removeBg) {
+                        alert('AI 模型尚未載入，請刷新頁面');
+                        return;
+                    }
+                    
+                    this.isProcessing = true;
+                    this.progress = 10;
+                    this.progressText = '分析圖片...';
+                    
+                    try {
+                        // Try passing the image URL/dataURL directly to the library
+                        // The library should handle loading internally
+                        console.log('Calling removeBg with:', typeof this.originalImage, this.originalImage.substring(0, 50));
+                        
+                        const blob = await window.removeBg(this.originalImage, {
+                            progress: (key, current, total) => {
+                                console.log('Progress:', key, current, total);
+                                if (total > 0) {
+                                    const pct = Math.round((current / total) * 100);
+                                    this.progress = Math.min(90, 30 + Math.round(pct * 0.6));
+                                }
+                                this.progressText = '處理中: ' + key;
+                            }
+                        });
+                        
+                        this.progress = 95;
+                        this.progressText = '生成圖片...';
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => { 
+                            this.resultImage = e.target.result; 
+                            this.isProcessing = false;
+                            this.progress = 100;
+                        };
+                        reader.readAsDataURL(blob);
+                        
+                    } catch (error) {
+                        console.error('Error:', error);
+                        this.isProcessing = false;
+                        alert('處理失敗: ' + error.message);
+                    }
+                },
+                
+                startOver() { this.clearImage(); }
+            }
+        }
+    </script>
+</body>
+</html>
