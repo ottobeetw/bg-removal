@@ -26,8 +26,14 @@
     <!-- Remix Icon Font -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
     
-    <!-- Amplitude Analytics -->
-    <script src="https://cdn.amplitude.com/script/5a7fef0c03f97881b583b22b86e95a62.js"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
     
     <script>
         tailwind.config = {
@@ -243,29 +249,9 @@
         </div>
     </footer>
     
-    <!-- Amplitude Init -->
+    <!-- GA Init -->
     <script>
-        // Initialize Amplitude
-        window.amplitude = window.amplitude || [];
-        window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
-        window.amplitude.init('5a7fef0c03f97881b583b22b86e95a62', {
-            fetchRemoteConfig: true,
-            autocapture: {
-                attribution: true,
-                fileDownloads: true,
-                formInteractions: true,
-                pageViews: true,
-                sessions: true,
-                elementInteractions: true,
-                networkTracking: true,
-                webVitals: true,
-                frustrationInteractions: {
-                    errorClicks: true,
-                    deadClicks: true,
-                    rageClicks: true
-                }
-            }
-        });
+        // GA4 is already initialized in head
     </script>
     
     <!-- Load library from CDN -->
@@ -276,10 +262,10 @@
         console.log('🔄 Loading @imgly/background-removal...');
         
         // Track page load
-        if (window.amplitude) {
-            window.amplitude.track('Page Loaded', {
-                page: 'bg-removal',
-                timestamp: new Date().toISOString()
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'page_view', {
+                page_title: 'AI 去背工具',
+                page_location: window.location.href
             });
         }
         
@@ -296,11 +282,12 @@
             console.log('✅ Ready!');
             
             // Track library loaded
-            if (window.amplitude) {
-                window.amplitude.track('Library Loaded', {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'library_loaded', {
                     library: '@imgly/background-removal',
                     version: '1.7.0'
                 });
+            }
             }
             
         } catch (error) {
@@ -309,10 +296,11 @@
             status.className = 'text-xs text-red-600 mt-4';
             
             // Track error
-            if (window.amplitude) {
-                window.amplitude.track('Library Load Error', {
-                    error: error.message
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'library_error', {
+                    error_message: error.message
                 });
+            }
             }
         }
     </script>
@@ -342,12 +330,13 @@
                 
                 loadFile(file) {
                     // Track file upload
-                    if (window.amplitude) {
-                        window.amplitude.track('File Selected', {
-                            fileName: file.name,
-                            fileSize: file.size,
-                            fileType: file.type
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'file_selected', {
+                            file_name: file.name,
+                            file_size: file.size,
+                            file_type: file.type
                         });
+                    }
                     }
                     
                     const reader = new FileReader();
@@ -379,10 +368,9 @@
                     }
                     
                     // Track start processing
-                    if (window.amplitude) {
-                        window.amplitude.track('Start Processing', {
-                            timestamp: new Date().toISOString()
-                        });
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'start_processing', {});
+                    }
                     }
                     
                     this.isProcessing = true;
@@ -413,10 +401,9 @@
                             this.progress = 100;
                             
                             // Track completion
-                            if (window.amplitude) {
-                                window.amplitude.track('Processing Complete', {
-                                    timestamp: new Date().toISOString()
-                                });
+                            if (typeof gtag !== 'undefined') {
+                                gtag('event', 'processing_complete', {});
+                            }
                             }
                         };
                         reader.readAsDataURL(blob);
@@ -426,10 +413,11 @@
                         this.isProcessing = false;
                         
                         // Track error
-                        if (window.amplitude) {
-                            window.amplitude.track('Processing Error', {
-                                error: error.message
+                        if (typeof gtag !== 'undefined') {
+                            gtag('event', 'processing_error', {
+                                error_message: error.message
                             });
+                        }
                         }
                         
                         alert('處理失敗: ' + error.message);
@@ -438,8 +426,8 @@
                 
                 startOver() { 
                     // Track reset
-                    if (window.amplitude) {
-                        window.amplitude.track('Reset');
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'reset', {});
                     }
                     this.clearImage(); 
                 }
