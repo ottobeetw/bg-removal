@@ -328,18 +328,11 @@
                     this.progressText = '分析圖片...';
                     
                     try {
-                        // Create Image element from the data URL
-                        const img = new Image();
-                        img.crossOrigin = 'anonymous';
-                        img.src = this.originalImage;
-                        await new Promise((resolve, reject) => {
-                            img.onload = resolve;
-                            img.onerror = () => reject(new Error('圖片載入失敗'));
-                        });
+                        // Pass the original image directly (data URL or URL string)
+                        const imageSource = this.originalImage || this.imageUrl;
+                        console.log('Processing image:', imageSource.substring(0, 50));
                         
-                        console.log('Image loaded:', img.width, 'x', img.height);
-                        
-                        const blob = await window.removeBg(img, {
+                        const blob = await window.removeBg(imageSource, {
                             progress: (key, current, total) => {
                                 console.log('Progress:', key, current, total);
                                 if (total > 0) {
