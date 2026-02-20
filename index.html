@@ -333,6 +333,8 @@
                         console.log('Processing image:', imageSource.substring(0, 50));
                         
                         const blob = await window.removeBg(imageSource, {
+                            publicPath: 'https://cdn.3mi.tw/bg-removal/models/',
+                            model: 'isnet_fp16',
                             progress: (key, current, total) => {
                                 console.log('Progress:', key, current, total);
                                 if (total > 0) {
