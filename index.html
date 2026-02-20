@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 相片去背工具 | 瀏覽器端自動去背 - 免費線上去背</title>
-    <meta name="description" content="免費線上 AI 相片去背工具，完全在瀏覽器端處理，保護隱私不需上傳圖片。支援 PNG、JPG、WebP 等格式，點擊上傳即可自動移除背景。">
+    <meta name="description" content="免費線上 AI 相片去背工具，完全在瀏覽器端處理，保護隱私不需上傳圖片。支援 PNG，JPG、WebP 等格式，點擊上傳即可自動移除背景。">
     <meta property="og:title" content="AI 相片去背工具 - 瀏覽器端自動去背">
     <meta property="og:description" content="免費線上 AI 相片去背工具，完全在瀏覽器端處理，保護隱私不需上傳圖片。">
     <meta property="og:image" content="https://bg-removal.3mi.tw/og-image.jpg">
@@ -22,6 +22,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wg300;400;500;600;700&family=jf-openhuninn:wg400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Remix Icon Font -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Amplitude Analytics -->
+    <script src="https://cdn.amplitude.com/script/5a7fef0c03f97881b583b22b86e95a62.js"></script>
     
     <script>
         tailwind.config = {
@@ -98,11 +104,15 @@
                 
                 <template x-if="!originalImage && !imageUrl">
                     <div class="py-12">
-                        <div class="text-6xl mb-4">🖼️</div>
+                        <div class="text-6xl mb-4">
+                            <i class="ri-image-add-line text-6xl text-accent"></i>
+                        </div>
                         <p class="text-xl text-gray-600 mb-2">拖曳或點擊選擇圖片</p>
                         <div class="mt-4 flex items-center justify-center gap-2">
                             <input type="text" x-model="imageUrl" placeholder="或貼上圖片網址..." class="px-4 py-2 border border-border rounded-lg w-64 focus:border-accent outline-none">
-                            <button @click="loadFromUrl()" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition">載入</button>
+                            <button @click="loadFromUrl()" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition">
+                                <i class="ri-download-cloud-line mr-1"></i>載入
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -110,7 +120,9 @@
                 <template x-if="originalImage || imageUrl">
                     <div class="relative">
                         <img :src="originalImage || imageUrl" class="max-h-96 mx-auto rounded-xl shadow-lg">
-                        <button @click.stop="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600">✕</button>
+                        <button @click.stop="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600">
+                            <i class="ri-close-line"></i>
+                        </button>
                     </div>
                 </template>
             </div>
@@ -122,8 +134,15 @@
                     :disabled="isProcessing"
                     class="btn-glow px-8 py-4 bg-gradient-to-r from-accent to-highlight text-white font-huninn text-xl font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                    <template x-if="!isProcessing"><span>✨ 開始去背</span></template>
-                    <template x-if="isProcessing"><span class="flex items-center gap-3"><span class="spinner"></span><span x-text="progressText">處理中...</span></span></template>
+                    <template x-if="!isProcessing">
+                        <span><i class="ri-magic-line mr-2"></i>開始去背</span>
+                    </template>
+                    <template x-if="isProcessing">
+                        <span class="flex items-center gap-3">
+                            <span class="spinner"></span>
+                            <span x-text="progressText">處理中...</span>
+                        </span>
+                    </template>
                 </button>
             </div>
             
@@ -140,19 +159,27 @@
             </div>
             
             <div x-show="resultImage" x-cloak class="text-center mb-8">
-                <h3 class="font-huninn text-2xl font-bold text-gray-800 mb-4">去背完成！</h3>
+                <h3 class="font-huninn text-2xl font-bold text-gray-800 mb-4">
+                    <i class="ri-check-line text-green-500 mr-2"></i>去背完成！
+                </h3>
                 <div class="checkerboard rounded-xl overflow-hidden inline-block mb-4">
                     <img :src="resultImage" class="max-h-96" alt="Result">
                 </div>
                 <div class="flex justify-center gap-4">
-                    <a :href="resultImage" download="removed-bg.png" class="px-6 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent-hover transition flex items-center gap-2">⬇️ 下載 PNG</a>
-                    <button @click="startOver()" class="px-6 py-3 bg-cream-200 text-ink-700 rounded-xl font-bold hover:bg-cream-300 transition">🔄 重新開始</button>
+                    <a :href="resultImage" download="removed-bg.png" class="px-6 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent-hover transition flex items-center gap-2">
+                        <i class="ri-download-line"></i>下載 PNG
+                    </a>
+                    <button @click="startOver()" class="px-6 py-3 bg-cream-200 text-ink-700 rounded-xl font-bold hover:bg-cream-300 transition flex items-center gap-2">
+                        <i class="ri-refresh-line"></i>重新開始
+                    </button>
                 </div>
             </div>
             
             <!-- SEO Content Section -->
             <div class="bg-white rounded-2xl p-6 border border-border mt-12">
-                <h2 class="font-huninn text-xl font-bold text-ink-900 mb-4">💡 使用說明</h2>
+                <h2 class="font-huninn text-xl font-bold text-ink-900 mb-4">
+                    <i class="ri-question-line text-accent mr-2"></i>使用說明
+                </h2>
                 <ol class="space-y-3 text-ink-600">
                     <li class="flex items-start gap-3">
                         <span class="text-accent font-bold">1.</span>
@@ -179,11 +206,13 @@
                         <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        🔒 圖片完全在瀏覽器內處理，不會上傳到伺服器，保護您的隱私
+                        圖片完全在瀏覽器內處理，不會上傳到伺服器，保護您的隱私
                     </p>
                 </div>
                 
-                <p class="text-xs text-ink-400 mt-4" id="lib-status">🚀 正在載入 AI 模型，請稍候...</p>
+                <p class="text-xs text-ink-400 mt-4" id="lib-status">
+                    <i class="ri-loader-4-line animate-spin mr-1"></i>正在載入 AI 模型，請稍候...
+                </p>
             </div>
             
             <!-- SEO Keywords Section -->
@@ -214,6 +243,31 @@
         </div>
     </footer>
     
+    <!-- Amplitude Init -->
+    <script>
+        // Initialize Amplitude
+        window.amplitude = window.amplitude || [];
+        window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+        window.amplitude.init('5a7fef0c03f97881b583b22b86e95a62', {
+            fetchRemoteConfig: true,
+            autocapture: {
+                attribution: true,
+                fileDownloads: true,
+                formInteractions: true,
+                pageViews: true,
+                sessions: true,
+                elementInteractions: true,
+                networkTracking: true,
+                webVitals: true,
+                frustrationInteractions: {
+                    errorClicks: true,
+                    deadClicks: true,
+                    rageClicks: true
+                }
+            }
+        });
+    </script>
+    
     <!-- Load library from CDN -->
     <script type="module">
         const status = document.getElementById('lib-status');
@@ -221,23 +275,45 @@
         
         console.log('🔄 Loading @imgly/background-removal...');
         
+        // Track page load
+        if (window.amplitude) {
+            window.amplitude.track('Page Loaded', {
+                page: 'bg-removal',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
         try {
-            const { removeBackground, preload } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+            const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
             
             window.removeBg = removeBackground;
-            window.preloadFn = preload;
             
             console.log('✅ Library loaded');
             
-            status.textContent = '✅ AI 模型已就緒！';
+            status.innerHTML = '<i class="ri-check-line text-green-500 mr-1"></i>AI 模型已就緒！';
             status.className = 'text-xs text-green-600 mt-4';
             btn.disabled = false;
             console.log('✅ Ready!');
             
+            // Track library loaded
+            if (window.amplitude) {
+                window.amplitude.track('Library Loaded', {
+                    library: '@imgly/background-removal',
+                    version: '1.7.0'
+                });
+            }
+            
         } catch (error) {
             console.error('❌ Error:', error);
-            status.textContent = '❌ 載入失敗: ' + error.message;
+            status.innerHTML = '<i class="ri-error-warning-line text-red-500 mr-1"></i>載入失敗: ' + error.message;
             status.className = 'text-xs text-red-600 mt-4';
+            
+            // Track error
+            if (window.amplitude) {
+                window.amplitude.track('Library Load Error', {
+                    error: error.message
+                });
+            }
         }
     </script>
     
@@ -265,8 +341,20 @@
                 },
                 
                 loadFile(file) {
+                    // Track file upload
+                    if (window.amplitude) {
+                        window.amplitude.track('File Selected', {
+                            fileName: file.name,
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                    }
+                    
                     const reader = new FileReader();
-                    reader.onload = (e) => { this.originalImage = e.target.result; this.resultImage = null; };
+                    reader.onload = (e) => { 
+                        this.originalImage = e.target.result; 
+                        this.resultImage = null; 
+                    };
                     reader.readAsDataURL(file);
                 },
                 
@@ -290,12 +378,19 @@
                         return;
                     }
                     
+                    // Track start processing
+                    if (window.amplitude) {
+                        window.amplitude.track('Start Processing', {
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    
                     this.isProcessing = true;
                     this.progress = 10;
                     this.progressText = '分析圖片...';
                     
                     try {
-                        console.log('Calling removeBg with:', typeof this.originalImage);
+                        console.log('Calling removeBg...');
                         
                         const blob = await window.removeBg(this.originalImage, {
                             progress: (key, current, total) => {
@@ -316,17 +411,38 @@
                             this.resultImage = e.target.result; 
                             this.isProcessing = false;
                             this.progress = 100;
+                            
+                            // Track completion
+                            if (window.amplitude) {
+                                window.amplitude.track('Processing Complete', {
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
                         };
                         reader.readAsDataURL(blob);
                         
                     } catch (error) {
                         console.error('Error:', error);
                         this.isProcessing = false;
+                        
+                        // Track error
+                        if (window.amplitude) {
+                            window.amplitude.track('Processing Error', {
+                                error: error.message
+                            });
+                        }
+                        
                         alert('處理失敗: ' + error.message);
                     }
                 },
                 
-                startOver() { this.clearImage(); }
+                startOver() { 
+                    // Track reset
+                    if (window.amplitude) {
+                        window.amplitude.track('Reset');
+                    }
+                    this.clearImage(); 
+                }
             }
         }
     </script>
