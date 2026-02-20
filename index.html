@@ -249,31 +249,6 @@
         </div>
     </footer>
     
-    <!-- Amplitude Init -->
-    <script>
-        // Initialize Amplitude
-        window.amplitude = window.amplitude || [];
-        window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
-        window.amplitude.init('5a7fef0c03f97881b583b22b86e95a62', {
-            fetchRemoteConfig: true,
-            autocapture: {
-                attribution: true,
-                fileDownloads: true,
-                formInteractions: true,
-                pageViews: true,
-                sessions: true,
-                elementInteractions: true,
-                networkTracking: true,
-                webVitals: true,
-                frustrationInteractions: {
-                    errorClicks: true,
-                    deadClicks: true,
-                    rageClicks: true
-                }
-            }
-        });
-    </script>
-    
     <!-- Load library from CDN -->
     <script type="module">
         const status = document.getElementById('lib-status');
@@ -282,12 +257,10 @@
         console.log('🔄 Loading @imgly/background-removal...');
         
         // Track page load
-        if (window.amplitude) {
+        if (typeof gtag !== 'undefined') {
             gtag('event', 'page_view', {
-                page_title: 'AI 去背工具'
-            });
-                page: 'bg-removal',
-                timestamp: new Date().toISOString()
+                page_title: 'AI 去背工具',
+                page: 'bg-removal'
             });
         }
         
@@ -304,13 +277,12 @@
             console.log('✅ Ready!');
             
             // Track library loaded
-            if (window.amplitude) {
+            if (typeof gtag !== 'undefined') {
                 gtag('event', 'library_loaded', {
-                library_version: '1.7.0'
-            });
                     library: '@imgly/background-removal',
                     version: '1.7.0'
                 });
+            }
             }
             
         } catch (error) {
@@ -319,11 +291,9 @@
             status.className = 'text-xs text-red-600 mt-4';
             
             // Track error
-            if (window.amplitude) {
+            if (typeof gtag !== 'undefined') {
                 gtag('event', 'library_error', {
-                error_message: error.message
-            });
-                    error: error.message
+                    error_message: error.message
                 });
             }
         }
@@ -354,15 +324,13 @@
                 
                 loadFile(file) {
                     // Track file upload
-                    if (window.amplitude) {
+                    if (typeof gtag !== 'undefined') {
                         gtag('event', 'file_selected', {
                             file_name: file.name,
-                            file_size: file.size
+                            file_size: file.size,
+                            file_type: file.type
                         });
-                            fileName: file.name,
-                            fileSize: file.size,
-                            fileType: file.type
-                        });
+                    }
                     }
                     
                     const reader = new FileReader();
@@ -430,10 +398,8 @@
                             this.progress = 100;
                             
                             // Track completion
-                            if (window.amplitude) {
-                            gtag('event', 'processing_complete', {});
-                                    timestamp: new Date().toISOString()
-                                });
+                            if (typeof gtag !== 'undefined') {
+                                gtag('event', 'processing_complete', {});
                             }
                         };
                         reader.readAsDataURL(blob);
@@ -443,11 +409,9 @@
                         this.isProcessing = false;
                         
                         // Track error
-                        if (window.amplitude) {
+                        if (typeof gtag !== 'undefined') {
                             gtag('event', 'processing_error', {
                                 error_message: error.message
-                            });
-                                error: error.message
                             });
                         }
                         
@@ -457,8 +421,8 @@
                 
                 startOver() { 
                     // Track reset
-                    if (window.amplitude) {
-                    gtag('event', 'reset', {});
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'reset', {});
                     }
                     this.clearImage(); 
                 }
