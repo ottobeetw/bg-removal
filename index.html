@@ -26,14 +26,8 @@
     <!-- Remix Icon Font -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
     
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
-    </script>
+    <!-- Amplitude Analytics -->
+    <script src="https://cdn.amplitude.com/script/5a7fef0c03f97881b583b22b86e95a62.js"></script>
     
     <script>
         tailwind.config = {
@@ -249,9 +243,29 @@
         </div>
     </footer>
     
-    <!-- GA Init -->
+    <!-- Amplitude Init -->
     <script>
-        // GA4 is already initialized in head
+        // Initialize Amplitude
+        window.amplitude = window.amplitude || [];
+        window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+        window.amplitude.init('5a7fef0c03f97881b583b22b86e95a62', {
+            fetchRemoteConfig: true,
+            autocapture: {
+                attribution: true,
+                fileDownloads: true,
+                formInteractions: true,
+                pageViews: true,
+                sessions: true,
+                elementInteractions: true,
+                networkTracking: true,
+                webVitals: true,
+                frustrationInteractions: {
+                    errorClicks: true,
+                    deadClicks: true,
+                    rageClicks: true
+                }
+            }
+        });
     </script>
     
     <!-- Load library from CDN -->
@@ -262,10 +276,10 @@
         console.log('🔄 Loading @imgly/background-removal...');
         
         // Track page load
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'page_view', {
-                page_title: 'AI 去背工具',
-                page_location: window.location.href
+        if (window.amplitude) {
+            window.amplitude.track('Page Loaded', {
+                page: 'bg-removal',
+                timestamp: new Date().toISOString()
             });
         }
         
@@ -282,12 +296,11 @@
             console.log('✅ Ready!');
             
             // Track library loaded
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'library_loaded', {
+            if (window.amplitude) {
+                window.amplitude.track('Library Loaded', {
                     library: '@imgly/background-removal',
                     version: '1.7.0'
                 });
-            }
             }
             
         } catch (error) {
@@ -296,11 +309,10 @@
             status.className = 'text-xs text-red-600 mt-4';
             
             // Track error
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'library_error', {
-                    error_message: error.message
+            if (window.amplitude) {
+                window.amplitude.track('Library Load Error', {
+                    error: error.message
                 });
-            }
             }
         }
     </script>
@@ -330,13 +342,12 @@
                 
                 loadFile(file) {
                     // Track file upload
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'file_selected', {
-                            file_name: file.name,
-                            file_size: file.size,
-                            file_type: file.type
+                    if (window.amplitude) {
+                        window.amplitude.track('File Selected', {
+                            fileName: file.name,
+                            fileSize: file.size,
+                            fileType: file.type
                         });
-                    }
                     }
                     
                     const reader = new FileReader();
@@ -368,9 +379,10 @@
                     }
                     
                     // Track start processing
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'start_processing', {});
-                    }
+                    if (window.amplitude) {
+                        window.amplitude.track('Start Processing', {
+                            timestamp: new Date().toISOString()
+                        });
                     }
                     
                     this.isProcessing = true;
@@ -401,9 +413,10 @@
                             this.progress = 100;
                             
                             // Track completion
-                            if (typeof gtag !== 'undefined') {
-                                gtag('event', 'processing_complete', {});
-                            }
+                            if (window.amplitude) {
+                                window.amplitude.track('Processing Complete', {
+                                    timestamp: new Date().toISOString()
+                                });
                             }
                         };
                         reader.readAsDataURL(blob);
@@ -413,11 +426,10 @@
                         this.isProcessing = false;
                         
                         // Track error
-                        if (typeof gtag !== 'undefined') {
-                            gtag('event', 'processing_error', {
-                                error_message: error.message
+                        if (window.amplitude) {
+                            window.amplitude.track('Processing Error', {
+                                error: error.message
                             });
-                        }
                         }
                         
                         alert('處理失敗: ' + error.message);
@@ -426,8 +438,8 @@
                 
                 startOver() { 
                     // Track reset
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'reset', {});
+                    if (window.amplitude) {
+                        window.amplitude.track('Reset');
                     }
                     this.clearImage(); 
                 }
