@@ -339,7 +339,15 @@
                                     const pct = Math.round((current / total) * 100);
                                     this.progress = Math.min(90, 30 + Math.round(pct * 0.6));
                                 }
-                                this.progressText = '處理中: ' + key;
+                                const keyLabels = {
+                                    'fetch:model': '下載模型中...',
+                                    'decode': '解讀圖片中...',
+                                    'inference': 'AI 推理中...',
+                                    'mask': '生成遮罩中...',
+                                    'encode': '輸出圖片中...'
+                                };
+                                const label = keyLabels[key] || '處理中: ' + key;
+                                this.progressText = label;
                             }
                         });
                         
