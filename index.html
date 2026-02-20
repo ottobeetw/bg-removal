@@ -381,8 +381,6 @@
                         console.log('Calling removeBg...');
                         
                         const blob = await window.removeBg(this.originalImage, {
-                            model: 'isnet', // Use largest model for better accuracy
-                            publicPath: 'https://staticimgly.com/@imgly/background-removal-data/@1.7.0/dist/',
                             progress: (key, current, total) => {
                                 console.log('Progress:', key, current, total);
                                 if (total > 0) {
