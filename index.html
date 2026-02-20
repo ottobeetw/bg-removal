@@ -3,28 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>相片去背 - AI 工具</title>
+    <title>AI 相片去背工具 | 瀏覽器端自動去背 - 免費線上去背</title>
+    <meta name="description" content="免費線上 AI 相片去背工具，完全在瀏覽器端處理，保護隱私不需上傳圖片。支援 PNG，JPG、WebP 等格式，點擊上傳即可自動移除背景。">
+    <meta property="og:title" content="AI 相片去背工具 - 瀏覽器端自動去背">
+    <meta property="og:description" content="免費線上 AI 相片去背工具，完全在瀏覽器端處理，保護隱私不需上傳圖片。">
+    <meta property="og:image" content="https://bg-removal.3mi.tw/og-image.jpg">
+    <meta property="og:url" content="https://bg-removal.3mi.tw">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_TW">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI 相片去背工具">
+    <meta name="twitter:description" content="免費線上 AI 相片去背工具，瀏覽器端處理，保護隱私">
+    <meta name="twitter:image" content="https://bg-removal.3mi.tw/og-image.jpg">
+    <link rel="canonical" href="https://bg-removal.3mi.tw">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wg300;400;500;600;700&family=jf-openhuninn:wg400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
+    <!-- Remix Icon Font -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R28K52V7L6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-R28K52V7L6');
+    </script>
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        cream: { 50: '#faf8f5', 100: '#f5f2ed', 200: '#ebe6df', 300: '#ddd5ca', 400: '#c9bfad' },
+                        cream: {
+                            100: '#faf8f5',
+                            200: '#f5f1eb',
+                            300: '#ebe6dc'
+                        },
+                        ink: {
+                            900: '#1a1a1a',
+                            700: '#383838',
+                            600: '#434343'
+                        },
+                        accent: {
+                            DEFAULT: '#ca8a04',
+                            hover: '#a16207',
+                            light: '#fef9c3'
+                        },
+                        highlight: '#fbbf24',
+                        border: '#e8e4dd',
+                        link: {
+                            DEFAULT: '#0d9488',
+                            hover: '#0f766e'
+                        },
                         warm: { 50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047', 400: '#ca8a04', 500: '#a16207' }
                     },
-                    fontFamily: { sans: ['NotoSansTC', 'system-ui'], huninn: ['jfOpenHuninn', 'NotoSansTC'] }
+                    fontFamily: { 
+                        sans: ['NotoSansTC', 'system-ui'], 
+                        huninn: ['jfOpenHuninn', 'NotoSansTC'] 
+                    }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'NotoSansTC', sans-serif; background: #faf8f5; }
+        body { font-family: 'NotoSansTC', sans-serif; background: #faf8f5; color: #1a1a1a; }
         .font-huninn { font-family: 'jfOpenHuninn', 'NotoSansTC', sans-serif; }
         .drop-zone { transition: all 0.3s ease; }
         .drop-zone.dragover { border-color: #ca8a04; background-color: #fefce8; transform: scale(1.02); }
@@ -36,106 +84,182 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen">
-    <div x-data="bgRemoval()" class="max-w-4xl mx-auto p-4 md:p-8">
-        <div class="text-center mb-8">
-            <h1 class="font-huninn text-4xl md:text-5xl font-bold text-gray-800 mb-2">✨ 相片去背</h1>
-            <p class="text-gray-500">瀏覽器端 AI 照片去背工具</p>
-        </div>
-        
-        <div class="drop-zone border-4 border-dashed border-cream-300 rounded-3xl p-8 text-center mb-6 cursor-pointer" :class="{ 'dragover': isDragging }" @click="$refs.fileInput.click()" @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop($event)">
-            <input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect($event)">
-            
-            <template x-if="!originalImage && !imageUrl">
-                <div class="py-12">
-                    <div class="text-6xl mb-4">🖼️</div>
-                    <p class="text-xl text-gray-600 mb-2">拖曳或點擊選擇圖片</p>
-                    <div class="mt-4 flex items-center justify-center gap-2">
-                        <input type="text" x-model="imageUrl" placeholder="或貼上圖片網址..." class="px-4 py-2 border border-cream-300 rounded-lg w-64 focus:border-warm-400 outline-none">
-                        <button @click="loadFromUrl()" class="px-4 py-2 bg-warm-400 text-white rounded-lg hover:bg-warm-500 transition">載入</button>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-accent to-highlight rounded-xl flex items-center justify-center text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-ink-900 font-huninn">AI 相片去背工具</h1>
+                        <p class="text-sm text-ink-600">瀏覽器端自動去背，完全免費</p>
                     </div>
                 </div>
-            </template>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-ink-600">
+                        <span>Beta v1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+        <div x-data="bgRemoval()">
+            <!-- SEO Hero Section -->
+            <div class="text-center mb-8">
+                <h2 class="text-xl font-semibold mb-3 text-ink-900 font-huninn">AI 相片去背工具 - 線上去背免費服務</h2>
+                <p class="text-ink-600 leading-relaxed">
+                    免費線上 <span class="text-accent font-medium">AI 相片去背</span>工具，採用先進的人工智慧技術，
+                    支援自動辨識主體並移除背景。完全在瀏覽器端處理，<span class="text-accent font-medium">保護隱私不需上傳圖片</span>，
+                    支援 PNG、JPG、WebP 等常見格式。
+                </p>
+            </div>
             
-            <template x-if="originalImage || imageUrl">
-                <div class="relative">
-                    <img :src="originalImage || imageUrl" class="max-h-96 mx-auto rounded-xl shadow-lg">
-                    <button @click.stop="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600">✕</button>
+            <!-- Library Status -->
+            <div id="lib-status" class="text-center mb-4">
+                <span class="text-xs text-gray-500">📥 載入 AI 模型中...</span>
+            </div>
+            
+            <!-- Drop Zone -->
+            <div class="drop-zone border-4 border-dashed border-cream-300 rounded-3xl p-8 text-center mb-6 cursor-pointer" :class="{ 'dragover': isDragging }" @click="$refs.fileInput.click()" @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop($event)">
+                <input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect($event)">
+                
+                <template x-if="!originalImage && !imageUrl">
+                    <div class="py-12">
+                        <i class="ri-image-line text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-xl text-ink-700 mb-2 font-huninn">拖曳或點擊選擇圖片</p>
+                        <div class="mt-4 flex items-center justify-center gap-2">
+                            <input type="text" x-model="imageUrl" placeholder="或貼上圖片網址..." class="px-4 py-2 border border-cream-300 rounded-lg w-64 focus:border-accent outline-none">
+                            <button @click="loadFromUrl()" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition">載入</button>
+                        </div>
+                    </div>
+                </template>
+                
+                <template x-if="originalImage || imageUrl">
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <p class="text-sm text-ink-600 mb-2 font-medium">原始圖片</p>
+                            <img :src="originalImage || imageUrl" class="max-h-64 mx-auto rounded-lg shadow">
+                        </div>
+                        
+                        <button @click="startOver()" class="text-red-500 hover:text-red-600 text-sm">
+                            <i class="ri-close-circle-line"></i> 重新選擇
+                        </button>
+                    </div>
+                </template>
+            </div>
+            
+            <!-- Process Button -->
+            <div class="text-center mb-8" x-show="originalImage || imageUrl">
+                <button @click="removeBackground()" :disabled="isProcessing || !window.removeBg" 
+                    class="btn-glow px-8 py-4 bg-accent text-white text-lg font-medium rounded-2xl hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto">
+                    <template x-if="!isProcessing">
+                        <span><i class="ri-magic-line mr-2"></i>開始去背</span>
+                    </template>
+                    <template x-if="isProcessing">
+                        <span class="flex items-center">
+                            <span class="spinner mr-2"></span>
+                            <span x-text="progressText">處理中...</span>
+                        </span>
+                    </template>
+                </button>
+                
+                <!-- Progress Bar -->
+                <div x-show="isProcessing" class="mt-4 max-w-md mx-auto">
+                    <div class="w-full bg-cream-300 rounded-full h-3 overflow-hidden">
+                        <div class="bg-accent h-3 rounded-full transition-all duration-300" :style="'width: ' + progress + '%'"></div>
+                    </div>
+                    <p class="text-xs text-ink-600 mt-2" x-text="progress + '%'"></p>
                 </div>
-            </template>
-        </div>
-        
-        <div class="text-center mb-8" x-show="originalImage || imageUrl" x-cloak>
-            <button 
-                id="processBtn"
-                @click="removeBackground()" 
-                :disabled="isProcessing"
-                class="btn-glow px-8 py-4 bg-gradient-to-r from-warm-400 to-warm-500 text-white font-huninn text-xl font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-                <template x-if="!isProcessing"><span>✨ 開始去背</span></template>
-                <template x-if="isProcessing"><span class="flex items-center gap-3"><span class="spinner"></span><span x-text="progressText">處理中...</span></span></template>
-            </button>
-        </div>
-        
-        <div x-show="isProcessing" x-cloak class="mb-6">
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <div class="flex justify-between text-sm mb-2">
-                    <span class="text-gray-600" x-text="statusText">準備中...</span>
-                    <span class="text-warm-400 font-bold" x-text="progress + '%'">0%</span>
+            </div>
+            
+            <!-- Result -->
+            <div x-show="resultImage" class="text-center">
+                <h3 class="text-lg font-semibold text-ink-900 mb-4 font-huninn">✨ 去背完成！</h3>
+                
+                <div class="checkerboard rounded-xl p-4 inline-block mb-4">
+                    <img :src="resultImage" class="max-h-80 rounded shadow">
                 </div>
-                <div class="h-3 bg-cream-200 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-warm-300 to-warm-400 transition-all duration-300" :style="'width: ' + progress + '%'"></div>
+                
+                <div class="flex justify-center gap-4">
+                    <a :href="resultImage" download="removed-bg.png" 
+                        class="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent-hover transition flex items-center">
+                        <i class="ri-download-line mr-2"></i>下載 PNG
+                    </a>
+                    <button @click="startOver()" class="px-6 py-3 border-2 border-cream-300 text-ink-700 rounded-xl hover:bg-cream-100 transition">
+                        <i class="ri-refresh-line mr-2"></i>再來一張
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <div x-show="resultImage" x-cloak class="text-center mb-8">
-            <h3 class="font-huninn text-2xl font-bold text-gray-800 mb-4">去背完成！</h3>
-            <div class="checkerboard rounded-xl overflow-hidden inline-block mb-4">
-                <img :src="resultImage" class="max-h-96" alt="Result">
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-border mt-12 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-ink-700 mb-2">有任何問題或建議嗎？歡迎與我聯繫！</p>
+            <div class="flex justify-center items-center space-x-4 text-sm">
+                <a href="https://twitter.com/SammyLinTw" target="_blank" class="text-link hover:text-link-hover flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                    @SammyLinTw
+                </a>
+                <span class="text-ink-600">|</span>
+                <a href="https://www.facebook.com/corn2277" target="_blank" class="text-link hover:text-link-hover flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    Sammy Lin
+                </a>
             </div>
-            <div class="flex justify-center gap-4">
-                <a :href="resultImage" download="removed-bg.png" class="px-6 py-3 bg-warm-400 text-white rounded-xl font-bold hover:bg-warm-500 transition flex items-center gap-2">⬇️ 下載 PNG</a>
-                <button @click="startOver()" class="px-6 py-3 bg-cream-200 text-gray-700 rounded-xl font-bold hover:bg-cream-300 transition">🔄 重新開始</button>
-            </div>
+            <p class="text-xs text-ink-600 mt-4">© 2026 AI 去背工具 by Sammy Lin. All rights reserved.</p>
         </div>
-        
-        <div class="bg-cream-100 rounded-xl p-6">
-            <h3 class="font-huninn text-lg font-bold text-gray-800 mb-4">💡 使用說明</h3>
-            <ol class="space-y-2 text-gray-600">
-                <li><strong>1.</strong> 上傳圖片 - 拖曳或點擊選擇圖片</li>
-                <li><strong>2.</strong> AI 去背 - 點擊開始去背按鈕</li>
-                <li><strong>3.</strong> 下載結果 - 取得透明背景 PNG 圖片</li>
-            </ol>
-            <p class="mt-4 text-sm text-gray-500">🔒 圖片完全在瀏覽器內處理，不會上傳到伺服器</p>
-            <p class="text-xs text-gray-400 mt-2" id="lib-status">🚀 正在載入 AI 模型，請稍候...</p>
-        </div>
-    </div>
+    </footer>
     
     <!-- Load library from CDN -->
     <script type="module">
         const status = document.getElementById('lib-status');
-        const btn = document.getElementById('processBtn');
         
-        console.log('🔄 Loading @imgly/background-removal...');
+        // Track page load
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'page_view', {
+                page_title: 'AI 去背工具',
+                page: 'bg-removal'
+            });
+        }
         
         try {
-            const { removeBackground, preload } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+            const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
             
             window.removeBg = removeBackground;
-            window.preloadFn = preload;
             
             console.log('✅ Library loaded');
             
-            status.textContent = '✅ AI 模型已就緒！';
-            status.className = 'text-xs text-green-600 mt-2';
-            btn.disabled = false;
+            status.innerHTML = '<i class="ri-check-line text-green-500 mr-1"></i>AI 模型已就緒！';
             console.log('✅ Ready!');
+            
+            // Track library loaded
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'library_loaded', {
+                    library: '@imgly/background-removal',
+                    version: '1.7.0'
+                });
+            }
             
         } catch (error) {
             console.error('❌ Error:', error);
-            status.textContent = '❌ 載入失敗: ' + error.message;
-            status.className = 'text-xs text-red-600 mt-2';
+            status.innerHTML = '<i class="ri-error-warning-line text-red-500 mr-1"></i>載入失敗: ' + error.message;
+            
+            // Track error
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'library_error', {
+                    error_message: error.message
+                });
+            }
         }
     </script>
     
@@ -148,7 +272,6 @@
                 isProcessing: false,
                 progress: 0,
                 progressText: '',
-                statusText: '',
                 isDragging: false,
                 
                 handleFileSelect(event) {
@@ -163,8 +286,20 @@
                 },
                 
                 loadFile(file) {
+                    // Track file upload
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'file_selected', {
+                            file_name: file.name,
+                            file_size: file.size,
+                            file_type: file.type
+                        });
+                    }
+                    
                     const reader = new FileReader();
-                    reader.onload = (e) => { this.originalImage = e.target.result; this.resultImage = null; };
+                    reader.onload = (e) => { 
+                        this.originalImage = e.target.result; 
+                        this.resultImage = null; 
+                    };
                     reader.readAsDataURL(file);
                 },
                 
@@ -193,11 +328,18 @@
                     this.progressText = '分析圖片...';
                     
                     try {
-                        // Try passing the image URL/dataURL directly to the library
-                        // The library should handle loading internally
-                        console.log('Calling removeBg with:', typeof this.originalImage, this.originalImage.substring(0, 50));
+                        // Create Image element from the data URL
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.src = this.originalImage;
+                        await new Promise((resolve, reject) => {
+                            img.onload = resolve;
+                            img.onerror = () => reject(new Error('圖片載入失敗'));
+                        });
                         
-                        const blob = await window.removeBg(this.originalImage, {
+                        console.log('Image loaded:', img.width, 'x', img.height);
+                        
+                        const blob = await window.removeBg(img, {
                             progress: (key, current, total) => {
                                 console.log('Progress:', key, current, total);
                                 if (total > 0) {
@@ -216,17 +358,36 @@
                             this.resultImage = e.target.result; 
                             this.isProcessing = false;
                             this.progress = 100;
+                            
+                            // Track completion
+                            if (typeof gtag !== 'undefined') {
+                                gtag('event', 'processing_complete', {});
+                            }
                         };
                         reader.readAsDataURL(blob);
                         
                     } catch (error) {
                         console.error('Error:', error);
                         this.isProcessing = false;
+                        
+                        // Track error
+                        if (typeof gtag !== 'undefined') {
+                            gtag('event', 'processing_error', {
+                                error_message: error.message
+                            });
+                        }
+                        
                         alert('處理失敗: ' + error.message);
                     }
                 },
                 
-                startOver() { this.clearImage(); }
+                startOver() { 
+                    // Track reset
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'reset', {});
+                    }
+                    this.clearImage(); 
+                }
             }
         }
     </script>
